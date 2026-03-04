@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: radial-gradient(circle at top, #1e293b 0%, #020617 45%);
+}
+
+input,
+select,
+textarea {
+  @apply w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  @apply border-cyan-500 ring-2 ring-cyan-500/20;
+}
+
+button {
+  @apply rounded-lg px-3 py-2 text-sm font-medium transition hover:brightness-110 disabled:opacity-50;
+}
