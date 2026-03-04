@@ -16,7 +16,7 @@ const tabs = [
   ['/explorer', 'API Tools']
 ];
 
-const defaultConfig = { baseUrl: 'https://thegymgroup.netpulse.com', companyUuid: '', clubUuid: '' };
+const defaultConfig = { baseUrl: '', companyUuid: '', clubUuid: '' };
 
 function classBrief(item) { return item?.brief || item || {}; }
 function getGroup(title) { return endpointGroups.find((group) => group.title === title)?.endpoints || []; }
@@ -47,7 +47,7 @@ function LoginPage() {
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
       <div className="mx-auto mt-20 max-w-md rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-2xl">
         <h1 className="text-2xl font-bold">Gym App Clone</h1>
-        <p className="mt-1 text-sm text-slate-300">Sign in to start your full gym journey.</p>
+        <p className="mt-1 text-sm text-slate-300">Sign in to start your full gym journey. Leave Base URL empty for local proxy (/np, /analysis) to avoid CORS in development.</p>
         <div className="mt-4 space-y-3">
           <input placeholder="Base URL" value={config.baseUrl} onChange={(event) => setConfig((c) => ({ ...c, baseUrl: event.target.value }))} />
           <input placeholder="Company UUID" value={config.companyUuid} onChange={(event) => setConfig((c) => ({ ...c, companyUuid: event.target.value }))} />
@@ -168,7 +168,7 @@ export default function App() {
   const run = async (endpointKey, values = {}, options = {}) => {
     try {
       setStatus({ loading: true, error: '' });
-      const result = await callEndpoint({ baseUrl: config.baseUrl, endpointKey, values: { ...config, exerciserUuid: auth.exerciserUuid, ...values }, token: auth.cookie });
+      const result = await callEndpoint({ baseUrl: config.baseUrl, endpointKey, values: { ...config, exerciserUuid: auth.exerciserUuid, ...values } });
       setLog((current) => [{ endpointKey, at: new Date().toISOString(), result }, ...current].slice(0, 30));
       if (!result.ok) throw new Error(`${endpointKey} failed (${result.status})`);
       options.onSuccess?.(result.data);
