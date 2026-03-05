@@ -172,9 +172,9 @@ function ClassesPage() {
               {brief.activity?.description && <p className="mt-2 text-xs text-slate-400">{brief.activity.description}</p>}
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <button className="bg-emerald-600 text-white" onClick={() => bookingAction('addExerciser', brief.id)}>Book</button>
-                <button className="bg-rose-600 text-white" onClick={() => bookingAction('removeExerciser', brief.id)}>Cancel</button>
-                <button className="bg-amber-600 text-white" onClick={() => bookingAction('waitlistAdd', brief.id)}>Waitlist</button>
+                <button className="bg-emerald-600 text-white" onClick={() => bookingAction('addExerciser', brief.id, brief.clubUuid)}>Book</button>
+                <button className="bg-rose-600 text-white" onClick={() => bookingAction('removeExerciser', brief.id, brief.clubUuid)}>Cancel</button>
+                <button className="bg-amber-600 text-white" onClick={() => bookingAction('waitlistAdd', brief.id, brief.clubUuid)}>Waitlist</button>
               </div>
             </article>
           );
@@ -279,7 +279,10 @@ export default function App() {
     run('challengesActive', {}, { onSuccess: (data) => setChallenges((c) => ({ ...c, active: data })) }),
     run('challengesPast', {}, { onSuccess: (data) => setChallenges((c) => ({ ...c, past: data })) })
   ]);
-  const bookingAction = async (action, classUuid) => { await run(action, { classUuid, companyUuid: config.companyUuid, exerciserUuid: auth.exerciserUuid }); await Promise.all([loadClasses(), loadSchedule()]); };
+  const bookingAction = async (action, classUuid, companyUuidOverride) => {
+    await run(action, { classUuid, companyUuid: companyUuidOverride || config.companyUuid, exerciserUuid: auth.exerciserUuid });
+    await Promise.all([loadClasses(), loadSchedule()]);
+  };
 
   const login = async () => {
     const payload = await run('login', loginForm);

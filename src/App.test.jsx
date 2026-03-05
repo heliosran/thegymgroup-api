@@ -115,6 +115,42 @@ describe('router gym app', () => {
     expect(mock).toHaveBeenCalled();
   });
 
+
+  it('uses class clubUuid as companyUuid for booking actions when config company UUID is empty', async () => {
+    const mock = queueFetch([
+      { sessionId: 's1', uuid: 'u1', firstName: 'Sam', homeClubUuid: 'club1' },
+      { gymLocationName: 'Acton', currentPercentage: 22 },
+      [{ brief: { id: 'c1', name: 'Spin' } }],
+      { checkIns: [] },
+      [{
+        brief: {
+          id: 'class-1',
+          name: 'Box Fit',
+          clubUuid: '58cf98f7-68e3-4371-9e22-3ca14842b5e9'
+        },
+        details: {},
+        attendeeDetails: {}
+      }],
+      { ok: true },
+      [{ brief: { id: 'class-1', name: 'Box Fit' } }],
+      [{ brief: { id: 'class-1', name: 'Box Fit' } }]
+    ]);
+
+    const user = userEvent.setup();
+    render(<App />);
+    await login(user);
+
+    await user.click(screen.getByRole('link', { name: 'Classes' }));
+    await user.click(screen.getByRole('button', { name: 'Find classes' }));
+    await user.click(await screen.findByRole('button', { name: 'Book' }));
+
+    const bookingCall = mock.mock.calls.find(([url, options]) =>
+      String(url).includes('/addExerciser') && options?.method === 'POST'
+    );
+    expect(bookingCall).toBeTruthy();
+    expect(bookingCall[0]).toContain('/np/company/58cf98f7-68e3-4371-9e22-3ca14842b5e9/class/class-1/addExerciser');
+  });
+
   it('loads and saves profile from profile screen', async () => {
     queueFetch([
       { sessionId: 's1', uuid: 'u1', firstName: 'Sam', homeClubUuid: 'club1' },
