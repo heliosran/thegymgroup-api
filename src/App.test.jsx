@@ -72,7 +72,28 @@ describe('router gym app', () => {
       { gymLocationName: 'Acton', currentPercentage: 22 },
       [{ brief: { id: 'c1', name: 'Spin' } }],
       { checkIns: [] },
-      [{ brief: { id: 'class-1', name: 'Box Fit' } }],
+      [{
+        brief: {
+          id: 'class-1',
+          name: 'Box Fit',
+          startDateTime: 1773050400000,
+          endDateTime: 1773052200000,
+          maxCapacity: 6,
+          totalBooked: 2,
+          waitlistCapacity: 5,
+          waitlistBooked: 1,
+          booked: true,
+          waitlisted: false,
+          cancelled: false,
+          type: null,
+          clubUuid: 'club1',
+          instructor: { fullName: '' },
+          activity: { description: 'Strength session' },
+          customInfo: [{ key: 'offPeakHours', value: 'true' }]
+        },
+        details: { cancellationWindowEnd: 1773050400000 },
+        attendeeDetails: { productAvailability: 'NOT_APPLICABLE', availableActions: ['REMOVE_FROM_CLASS'] }
+      }],
       { ok: true },
       [{ brief: { id: 'class-1', name: 'Box Fit' } }],
       [{ brief: { id: 'class-1', name: 'Box Fit' } }]
@@ -83,9 +104,15 @@ describe('router gym app', () => {
 
     await user.click(screen.getByRole('link', { name: 'Classes' }));
     await user.click(screen.getByRole('button', { name: 'Find classes' }));
+    expect(await screen.findByText('Box Fit')).toBeInTheDocument();
+    expect(screen.getByText(/Booked:/)).toBeInTheDocument();
+    expect(screen.getByText(/Available:/)).toBeInTheDocument();
+    expect(screen.getByText(/Cancel before:/)).toBeInTheDocument();
+    expect(screen.getByText(/offPeakHours: true/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Strength session/).length).toBeGreaterThan(0);
+
     await user.click(await screen.findByRole('button', { name: 'Book' }));
     expect(mock).toHaveBeenCalled();
-    expect(screen.getByText('Box Fit')).toBeInTheDocument();
   });
 
   it('loads and saves profile from profile screen', async () => {

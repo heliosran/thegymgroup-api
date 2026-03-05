@@ -19,6 +19,20 @@ const tabs = [
 const defaultConfig = { baseUrl: '', companyUuid: '', clubUuid: '' };
 
 function classBrief(item) { return item?.brief || item || {}; }
+
+function formatDateTime(epochMs) {
+  if (!epochMs) return 'N/A';
+  const date = new Date(Number(epochMs));
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
+}
+
+function capacitySummary(brief = {}) {
+  const max = brief.maxCapacity ?? 0;
+  const booked = brief.totalBooked ?? 0;
+  const spotsLeft = max ? Math.max(max - booked, 0) : 'N/A';
+  return { max, booked, spotsLeft };
+}
 function getGroup(title) { return endpointGroups.find((group) => group.title === title)?.endpoints || []; }
 
 function Screen({ title, endpointTitles = [], children }) {
@@ -111,7 +125,60 @@ function ClassesPage() {
         <button className="bg-cyan-600 text-white" onClick={loadClasses}>Find classes</button>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        {classes.map((item) => { const brief = classBrief(item); return <article key={brief.id} className="rounded-xl border border-slate-700 p-3"><p className="font-semibold">{brief.name}</p><div className="mt-2 flex gap-2"><button className="bg-emerald-600 text-white" onClick={() => bookingAction('addExerciser', brief.id)}>Book</button><button className="bg-rose-600 text-white" onClick={() => bookingAction('removeExerciser', brief.id)}>Cancel</button><button className="bg-amber-600 text-white" onClick={() => bookingAction('waitlistAdd', brief.id)}>Waitlist</button></div></article>; })}
+        {classes.map((item) => {
+          const brief = classBrief(item);
+          const details = item?.details || {};
+          const attendee = item?.attendeeDetails || {};
+          const { max, booked, spotsLeft } = capacitySummary(brief);
+
+          return (
+            <article key={brief.id} className="rounded-xl border border-slate-700 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{brief.name || 'Unnamed class'}</p>
+                  <p className="text-xs text-slate-300">{formatDateTime(brief.startDateTime)} → {formatDateTime(brief.endDateTime)}</p>
+                </div>
+                <div className="text-right text-xs">
+                  <p className={brief.cancelled ? 'text-rose-400' : 'text-emerald-400'}>{brief.cancelled ? 'Cancelled' : 'Active'}</p>
+                  <p className="text-slate-400">{brief.type || 'General'}</p>
+                </div>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-200">
+                <p>Instructor: <span className="text-slate-400">{brief.instructor?.fullName || 'TBC'}</span></p>
+                <p>Club: <span className="text-slate-400">{brief.clubUuid || 'N/A'}</span></p>
+                <p>Booked: <span className="text-slate-400">{booked}/{max || 'N/A'}</span></p>
+                <p>Available: <span className="text-slate-400">{spotsLeft}</span></p>
+                <p>Waitlist: <span className="text-slate-400">{brief.waitlistBooked ?? 0}/{brief.waitlistCapacity ?? 0}</span></p>
+                <p>Booking status: <span className="text-slate-400">{brief.booked ? 'Booked' : (brief.waitlisted ? 'Waitlisted' : 'Not booked')}</span></p>
+                <p>Attendee availability: <span className="text-slate-400">{attendee.productAvailability || 'N/A'}</span></p>
+                <p>Actions: <span className="text-slate-400">{(attendee.availableActions || []).join(', ') || 'None'}</span></p>
+              </div>
+
+              {details.cancellationWindowEnd && (
+                <p className="mt-2 text-xs text-slate-300">Cancel before: {formatDateTime(details.cancellationWindowEnd)}</p>
+              )}
+
+              {(brief.customInfo || []).length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {brief.customInfo.map((entry) => (
+                    <span key={`${brief.id}-${entry.key}`} className="rounded bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
+                      {entry.key}: {entry.value}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {brief.activity?.description && <p className="mt-2 text-xs text-slate-400">{brief.activity.description}</p>}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button className="bg-emerald-600 text-white" onClick={() => bookingAction('addExerciser', brief.id)}>Book</button>
+                <button className="bg-rose-600 text-white" onClick={() => bookingAction('removeExerciser', brief.id)}>Cancel</button>
+                <button className="bg-amber-600 text-white" onClick={() => bookingAction('waitlistAdd', brief.id)}>Waitlist</button>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </Screen>
   );
