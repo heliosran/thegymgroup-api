@@ -21,12 +21,8 @@ export function buildRequest(baseUrl, endpoint, values = {}) {
     'X-NP-User-Agent': values.npUserAgent ?? 'clientType=MOBILE_DEVICE; devicePlatform=ANDROID; applicationName=The Gym Group; applicationVersion=5.0; applicationVersionCode=38'
   };
 
-  if (values.jsessionId) {
-    headers['X-JSESSIONID'] = String(values.jsessionId);
-  }
-
-  // Intentionally omit browser ambient cookies; proxy will forward only JSESSIONID from X-JSESSIONID.
-  const options = { method: endpoint.method, headers, credentials: 'omit' };
+  // Browser sends cookies to local dev server; proxy forwards only JSESSIONID upstream.
+  const options = { method: endpoint.method, headers, credentials: 'include' };
 
   if (endpoint.form?.length) {
     options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
