@@ -17,16 +17,9 @@
 
           packages = with pkgs; [
             bun
-            nodejs_22
+            nodejs_24
             git
           ];
-
-          shellHook = ''
-            echo "The Gym Group API dev shell"
-            echo "- bun: $(bun --version)"
-            echo "- node: $(node --version)"
-            echo "Run: bun install && bun run dev"
-          '';
         };
       });
 }
