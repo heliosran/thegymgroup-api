@@ -9,19 +9,20 @@ describe('endpoint coverage', () => {
     expect(keys.size).toBe(allEndpoints.length);
   });
 
-  it('builds class booking request with path/query/form and browser-safe options', () => {
+  it('builds class booking request with jsession header only and omits ambient cookies', () => {
     const endpoint = allEndpoints.find((item) => item.key === 'addExerciser');
     const { url, options } = buildRequest('', endpoint, {
       companyUuid: 'club-1',
       classUuid: 'class-1',
       exerciserUuid: 'user-1',
-      spot: '3'
+      spot: '3',
+      jsessionId: 'session-123'
     });
 
     expect(url).toContain('/np/company/club-1/class/class-1/addExerciser');
-    expect(options.credentials).toBe('include');
+    expect(options.credentials).toBe('omit');
     expect(options.body.toString()).toContain('spot=3');
-    expect(options.headers['User-Agent']).toBeUndefined();
+    expect(options.headers['X-JSESSIONID']).toBe('session-123');
     expect(options.headers.Cookie).toBeUndefined();
   });
 

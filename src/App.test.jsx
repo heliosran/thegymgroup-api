@@ -149,6 +149,8 @@ describe('router gym app', () => {
     );
     expect(bookingCall).toBeTruthy();
     expect(bookingCall[0]).toContain('/np/company/58cf98f7-68e3-4371-9e22-3ca14842b5e9/class/class-1/addExerciser');
+    expect(bookingCall[1].credentials).toBe('omit');
+    expect(bookingCall[1].headers['X-JSESSIONID']).toBe('s1');
   });
 
   it('loads and saves profile from profile screen', async () => {

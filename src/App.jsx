@@ -20,6 +20,13 @@ const defaultConfig = { baseUrl: '', companyUuid: '', clubUuid: '' };
 
 function classBrief(item) { return item?.brief || item || {}; }
 
+
+function extractSessionId(cookieValue = '') {
+  if (!cookieValue) return '';
+  return String(cookieValue).replace(/^JSESSIONID=/, '').trim();
+}
+
+
 function formatDateTime(epochMs) {
   if (!epochMs) return 'N/A';
   const date = new Date(Number(epochMs));
@@ -240,7 +247,7 @@ export default function App() {
       const result = await callEndpoint({
         baseUrl: config.baseUrl,
         endpointKey,
-        values: { ...config, clubUuid: effectiveClubUuid, exerciserUuid: effectiveExerciserUuid, ...values }
+        values: { ...config, clubUuid: effectiveClubUuid, exerciserUuid: effectiveExerciserUuid, jsessionId: runtime.jsessionId ?? extractSessionId(auth.cookie), ...values }
       });
       setLog((current) => [{ endpointKey, at: new Date().toISOString(), result }, ...current].slice(0, 30));
       if (!result.ok) throw new Error(`${endpointKey} failed (${result.status})`);
@@ -285,7 +292,7 @@ export default function App() {
   };
 
   const login = async () => {
-    const payload = await run('login', loginForm);
+    const payload = await run('login', { ...loginForm, jsessionId: '' });
     if (!payload?.uuid) return;
     setAuth({ cookie: `JSESSIONID=${payload.sessionId || ''}`, exerciserUuid: payload.uuid || '', firstName: payload.firstName || '' });
     setConfig((current) => ({ ...current, clubUuid: payload.homeClubUuid || current.clubUuid }));

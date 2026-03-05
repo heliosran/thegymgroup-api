@@ -21,9 +21,12 @@ export function buildRequest(baseUrl, endpoint, values = {}) {
     'X-NP-User-Agent': values.npUserAgent ?? 'clientType=MOBILE_DEVICE; devicePlatform=ANDROID; applicationName=The Gym Group; applicationVersion=5.0; applicationVersionCode=38'
   };
 
-  // Browser-safe request: Cookie/User-Agent are forbidden request headers in frontend JS.
-  // Vite dev proxy avoids CORS by forwarding same-origin /np and /analysis calls server-side.
-  const options = { method: endpoint.method, headers, credentials: 'include' };
+  if (values.jsessionId) {
+    headers['X-JSESSIONID'] = String(values.jsessionId);
+  }
+
+  // Intentionally omit browser ambient cookies; proxy will forward only JSESSIONID from X-JSESSIONID.
+  const options = { method: endpoint.method, headers, credentials: 'omit' };
 
   if (endpoint.form?.length) {
     options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
