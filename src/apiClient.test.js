@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { allEndpoints } from './data/endpoints';
-import { buildRequest } from './apiClient';
+import { buildRequest, callEndpoint } from './apiClient';
 
 describe('endpoint coverage', () => {
   it('contains all documented endpoints as executable definitions', () => {
@@ -23,5 +23,25 @@ describe('endpoint coverage', () => {
     expect(options.body.toString()).toContain('spot=3');
     expect(options.headers['User-Agent']).toBeUndefined();
     expect(options.headers.Cookie).toBeUndefined();
+  });
+
+  it('preserves falsy JSON values instead of coercing to empty strings', () => {
+    const endpoint = allEndpoints.find((item) => item.key === 'egymOptInsSet');
+    const { options } = buildRequest('', endpoint, {
+      exerciserUuid: 'user-1',
+      marketing: false,
+      thirdParty: false
+    });
+
+    expect(options.headers['Content-Type']).toBe('application/json');
+    expect(options.body).toBe('{"marketing":false,"thirdParty":false}');
+  });
+
+  it('does not throw on non-JSON responses', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => 'plain-text' }));
+    const result = await callEndpoint({ baseUrl: '', endpointKey: 'challengePrizeImage', values: { challengeId: 'abc' } });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ raw: 'plain-text' });
+    vi.unstubAllGlobals();
   });
 });

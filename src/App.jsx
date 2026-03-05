@@ -165,10 +165,16 @@ export default function App() {
 
   const isAuthed = Boolean(auth.exerciserUuid && auth.cookie);
 
-  const run = async (endpointKey, values = {}, options = {}) => {
+  const run = async (endpointKey, values = {}, options = {}, runtime = {}) => {
     try {
       setStatus({ loading: true, error: '' });
-      const result = await callEndpoint({ baseUrl: config.baseUrl, endpointKey, values: { ...config, exerciserUuid: auth.exerciserUuid, ...values } });
+      const effectiveClubUuid = runtime.clubUuid ?? config.clubUuid;
+      const effectiveExerciserUuid = runtime.exerciserUuid ?? auth.exerciserUuid;
+      const result = await callEndpoint({
+        baseUrl: config.baseUrl,
+        endpointKey,
+        values: { ...config, clubUuid: effectiveClubUuid, exerciserUuid: effectiveExerciserUuid, ...values }
+      });
       setLog((current) => [{ endpointKey, at: new Date().toISOString(), result }, ...current].slice(0, 30));
       if (!result.ok) throw new Error(`${endpointKey} failed (${result.status})`);
       options.onSuccess?.(result.data);
@@ -181,11 +187,25 @@ export default function App() {
     }
   };
 
-  const loadSchedule = () => run('schedule', { startDateTime: `${Date.now() - 86400000}`, endDateTime: `${Date.now() + 14 * 86400000}`, clubUuid: config.clubUuid }, { onSuccess: setSchedule });
-  const loadHome = async () => Promise.all([
-    run('gymBusyness', { gymLocationId: config.clubUuid }, { onSuccess: setGymBusyness }),
-    loadSchedule(),
-    run('checkinHistory', { startDate: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19), endDate: new Date().toISOString().slice(0, 19) }, { onSuccess: (data) => setCheckIns(data.checkIns || data) })
+  const loadSchedule = (runtime = {}) => run(
+    'schedule',
+    {
+      startDateTime: `${Date.now() - 86400000}`,
+      endDateTime: `${Date.now() + 14 * 86400000}`,
+      clubUuid: runtime.clubUuid ?? config.clubUuid
+    },
+    { onSuccess: setSchedule },
+    runtime
+  );
+  const loadHome = async (runtime = {}) => Promise.all([
+    run('gymBusyness', { gymLocationId: runtime.clubUuid ?? config.clubUuid }, { onSuccess: setGymBusyness }, runtime),
+    loadSchedule(runtime),
+    run(
+      'checkinHistory',
+      { startDate: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 19), endDate: new Date().toISOString().slice(0, 19) },
+      { onSuccess: (data) => setCheckIns(data.checkIns || data) },
+      runtime
+    )
   ]);
   const loadClasses = () => run('classes', classWindow, { onSuccess: setClasses });
   const loadChallenges = async () => Promise.all([
@@ -199,7 +219,7 @@ export default function App() {
     if (!payload?.uuid) return;
     setAuth({ cookie: `JSESSIONID=${payload.sessionId || ''}`, exerciserUuid: payload.uuid || '', firstName: payload.firstName || '' });
     setConfig((current) => ({ ...current, clubUuid: payload.homeClubUuid || current.clubUuid }));
-    await loadHome();
+    await loadHome({ exerciserUuid: payload.uuid || '', clubUuid: payload.homeClubUuid || config.clubUuid });
   };
 
   const contextValue = useMemo(() => ({
