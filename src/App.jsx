@@ -4,6 +4,7 @@ import { callEndpoint } from './apiClient';
 import { endpointGroups } from './data/endpoints';
 import { GymAppContext, useGymApp } from './app/context';
 import EndpointRunner from './components/EndpointRunner';
+import { LoginForm } from './loginForm';
 
 const tabs = [
   ['/', 'Dashboard'],
@@ -63,14 +64,14 @@ function LoginPage() {
       <div className="mx-auto mt-20 max-w-md rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-2xl">
         <h1 className="text-2xl font-bold">Gym App Clone</h1>
         <p className="mt-1 text-sm text-slate-300">Sign in to start your full gym journey. Leave Base URL empty for local proxy (/np, /analysis) to avoid CORS in development.</p>
-        <div className="mt-4 space-y-3">
-          <input placeholder="Base URL" value={config.baseUrl} onChange={(event) => setConfig((c) => ({ ...c, baseUrl: event.target.value }))} />
-          <input placeholder="Company UUID" value={config.companyUuid} onChange={(event) => setConfig((c) => ({ ...c, companyUuid: event.target.value }))} />
-          <input placeholder="Email" value={loginForm.username} onChange={(event) => setLoginForm((f) => ({ ...f, username: event.target.value }))} />
-          <input placeholder="PIN / password" type="password" value={loginForm.password} onChange={(event) => setLoginForm((f) => ({ ...f, password: event.target.value }))} />
-          <button className="w-full bg-cyan-600 text-white" onClick={login} disabled={status.loading}>Sign in</button>
-          {status.error && <p className="text-xs text-rose-400">{status.error}</p>}
-        </div>
+        <LoginForm
+          config={config}
+          setConfig={setConfig}
+          loginForm={loginForm}
+          setLoginForm={setLoginForm}
+          login={login}
+          status={status}
+        />
       </div>
     </main>
   );
