@@ -1,21 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, test, mock } from 'bun:test';
 import { allEndpoints } from './data/endpoints';
 import { buildRequest, callEndpoint } from './apiClient';
 
 describe('endpoint coverage', () => {
-  it('contains all documented endpoints as executable definitions', () => {
+  test('contains all documented endpoints as executable definitions', () => {
     expect(allEndpoints.length).toBe(83);
     const keys = new Set(allEndpoints.map((item) => item.key));
     expect(keys.size).toBe(allEndpoints.length);
   });
 
-  it('builds class booking request using browser session credentials', () => {
+  test('builds class booking request using browser session credentials', () => {
     const endpoint = allEndpoints.find((item) => item.key === 'addExerciser');
     const { url, options } = buildRequest('', endpoint, {
       companyUuid: 'club-1',
       classUuid: 'class-1',
       exerciserUuid: 'user-1',
-      spot: '3',
+      spot: '3'
     });
 
     expect(url).toContain('/np/company/club-1/class/class-1/addExerciser');
@@ -24,7 +24,7 @@ describe('endpoint coverage', () => {
     expect(options.headers.Cookie).toBeUndefined();
   });
 
-  it('preserves falsy JSON values instead of coercing to empty strings', () => {
+  test('preserves falsy JSON values instead of coercing to empty strings', () => {
     const endpoint = allEndpoints.find((item) => item.key === 'egymOptInsSet');
     const { options } = buildRequest('', endpoint, {
       exerciserUuid: 'user-1',
@@ -36,11 +36,12 @@ describe('endpoint coverage', () => {
     expect(options.body).toBe('{"marketing":false,"thirdParty":false}');
   });
 
-  it('does not throw on non-JSON responses', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => 'plain-text' }));
+  test('does not throw on non-JSON responses', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = mock(() => Promise.resolve({ ok: true, status: 200, text: async () => 'plain-text' }));
     const result = await callEndpoint({ baseUrl: '', endpointKey: 'challengePrizeImage', values: { challengeId: 'abc' } });
     expect(result.ok).toBe(true);
     expect(result.data).toEqual({ raw: 'plain-text' });
-    vi.unstubAllGlobals();
+    globalThis.fetch = originalFetch;
   });
 });

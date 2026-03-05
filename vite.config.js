@@ -26,9 +26,5 @@ export default defineConfig({
       '/np': gymProxyConfig(),
       '/analysis': gymProxyConfig()
     }
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.js'
   }
 });
